@@ -28,12 +28,18 @@ const format = winston.format.combine(
 
 const transports = [
   new winston.transports.Console(),
-  new winston.transports.File({
-    filename: "logs/error.log",
-    level: "error",
-  }),
-  new winston.transports.File({ filename: "logs/combined.log" }),
 ];
+
+// File logging is disabled on serverless platforms like Vercel to avoid filesystem write errors
+if (!process.env.VERCEL) {
+  transports.push(
+    new winston.transports.File({
+      filename: "logs/error.log",
+      level: "error",
+    }),
+    new winston.transports.File({ filename: "logs/combined.log" })
+  );
+}
 
 export const logger = winston.createLogger({
   level: process.env.NODE_ENV === "development" ? "debug" : "info",

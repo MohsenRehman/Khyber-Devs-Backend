@@ -47,7 +47,9 @@ export const processEmailJob = async (job) => {
 
 // Initialize Background Listener
 const initEmailWorker = () => {
-  if (isMock) {
+  const useInMemoryWorker = isMock || process.env.VERCEL;
+
+  if (useInMemoryWorker) {
     // Register the processor directly with the mock queue callback
     registerMockProcessor(processEmailJob);
     logger.info("BullMQ Email Worker registered in-memory mock handler.");

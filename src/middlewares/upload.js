@@ -8,8 +8,14 @@ import BadRequestError from "../errors/BadRequestError.js";
 
 // Ensure local uploads directory exists for disk storage fallback
 const localUploadsDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(localUploadsDir)) {
-  fs.mkdirSync(localUploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(localUploadsDir)) {
+    fs.mkdirSync(localUploadsDir, { recursive: true });
+  }
+} catch (error) {
+  // Fail-safe for read-only environments like Vercel serverless.
+  // Fallback upload uses Cloudinary when configured correctly.
+  logger.warn(`Could not check/create local uploads folder: ${error.message}. This is normal on read-only serverless filesystems.`);
 }
 
 // ─── FILTERS & LIMITS ────────────────────────────────────────────────────────

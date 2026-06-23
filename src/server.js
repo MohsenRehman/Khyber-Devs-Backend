@@ -229,31 +229,35 @@ const seedAllData = async () => {
   }
 };
 
-// Start Server & Listen (retriggered)
-const server = app.listen(PORT, async () => {
-  logger.info(`[KHBER DEVS] Server running under port ${PORT} in ${process.env.NODE_ENV} environment.`);
-  await seedAdminUser();
-  await seedAllData();
-});
-
-// ─── GRACEFUL SHUTDOWN ────────────────────────────────────────────────────────
-
-const shutdown = async (signal) => {
-  logger.warn(`Received signal ${signal}. Shutting down Express server gracefully...`);
-
-  server.close(async () => {
-    logger.info("Express server closed.");
-    await closeDB();
-    logger.info("Graceful shutdown sequence completed.");
-    process.exit(0);
+// Start Server & Listen (only if not in serverless Vercel context)
+if (!process.env.VERCEL) {
+  const server = app.listen(PORT, async () => {
+    logger.info(`[KHBER DEVS] Server running under port ${PORT} in ${process.env.NODE_ENV} environment.`);
+    await seedAdminUser();
+    await seedAllData();
   });
 
-  // Force shutdown after 10 seconds
-  setTimeout(() => {
-    logger.error("Forced shutdown triggered after timeout.");
-    process.exit(1);
-  }, 10000);
-};
+  // ─── GRACEFUL SHUTDOWN ────────────────────────────────────────────────────────
 
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
+  const shutdown = async (signal) => {
+    logger.warn(`Received signal ${signal}. Shutting down Express server gracefully...`);
+
+    server.close(async () => {
+      logger.info("Express server closed.");
+      await closeDB();
+      logger.info("Graceful shutdown sequence completed.");
+      process.exit(0);
+    });
+
+    // Force shutdown after 10 seconds
+    setTimeout(() => {
+      logger.error("Forced shutdown triggered after timeout.");
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
+}
+
+export default app;

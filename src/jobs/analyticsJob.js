@@ -33,6 +33,11 @@ export const runAnalyticsAggregation = async () => {
 
 // Initialize Background Interval Runner
 const initAnalyticsJob = () => {
+  if (process.env.VERCEL) {
+    logger.info("Serverless environment detected (Vercel). Skipping background analytics interval runner.");
+    return;
+  }
+
   logger.info("Initializing scheduled daily analytics aggregator job...");
 
   // Run immediately on boot to ensure current summaries are populated

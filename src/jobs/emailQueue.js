@@ -10,19 +10,24 @@ export const registerMockProcessor = (processor) => {
   mockProcessor = processor;
 };
 
-if (isMock) {
-  logger.warn("Redis Mock active. BullMQ running in local non-blocking setImmediate mode.");
+const useInMemoryQueue = isMock || process.env.VERCEL;
+
+if (useInMemoryQueue) {
+  if (process.env.VERCEL) {
+    logger.warn("Serverless environment detected (Vercel). BullMQ running in synchronous inline fallback mode.");
+  } else {
+    logger.warn("Redis Mock active. BullMQ running in local non-blocking setImmediate mode.");
+  }
   
   // Expose mock queue interface matching standard BullMQ
   emailQueue = {
     add: async (jobName, data) => {
       logger.info(`[BullMQ MOCK] Queueing job '${jobName}' in-memory.`);
       
-      // Asynchronous non-blocking execution to mimic Redis background queueing
-      setImmediate(async () => {
+      const executeJob = async () => {
         if (mockProcessor) {
           try {
-            logger.info(`[BullMQ MOCK] Processing job '${jobName}' in background.`);
+            logger.info(`[BullMQ MOCK] Processing job '${jobName}' in-memory.`);
             await mockProcessor({ name: jobName, data });
           } catch (err) {
             logger.error(`[BullMQ MOCK] Job execution failed: ${err.message}`);
@@ -30,7 +35,15 @@ if (isMock) {
         } else {
           logger.warn(`[BullMQ MOCK] Job '${jobName}' ignored. No worker processor registered.`);
         }
-      });
+      };
+
+      if (process.env.VERCEL) {
+        // Await execution inline synchronously to prevent Vercel container freeze before completion
+        await executeJob();
+      } else {
+        // Asynchronous non-blocking execution to mimic Redis background queueing
+        setImmediate(executeJob);
+      }
       
       return { id: `mock-job-${Date.now()}` };
     },
