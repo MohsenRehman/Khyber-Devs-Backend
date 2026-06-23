@@ -21,7 +21,7 @@ export const login = async (req, res, next) => {
     }
 
     const { email, password } = validation.data;
-    const ipAddress = req.ip || req.connection.remoteAddress;
+    const ipAddress = req.ip || (req.connection && req.connection.remoteAddress) || (req.socket && req.socket.remoteAddress) || "127.0.0.1";
     const userAgent = req.headers["user-agent"];
 
     // 2. Execute Auth Service

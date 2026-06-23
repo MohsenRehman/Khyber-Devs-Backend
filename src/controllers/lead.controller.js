@@ -4,7 +4,7 @@ import BadRequestError from "../errors/BadRequestError.js";
 
 export const submitLead = async (req, res, next) => {
   try {
-    const ipAddress = req.ip || req.connection.remoteAddress;
+    const ipAddress = req.ip || (req.connection && req.connection.remoteAddress) || (req.socket && req.socket.remoteAddress) || "127.0.0.1";
     const lead = await leadService.createLead(req.body, ipAddress);
     return sendSuccess(res, "Your project specifications have been submitted successfully.", lead, 201);
   } catch (error) {

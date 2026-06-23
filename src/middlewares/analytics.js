@@ -26,7 +26,7 @@ export const trackVisitor = async (req, res, next) => {
   setImmediate(async () => {
     try {
       const userAgent = req.headers["user-agent"] || "";
-      const ipAddress = req.ip || req.connection.remoteAddress || "127.0.0.1";
+      const ipAddress = req.ip || (req.connection && req.connection.remoteAddress) || (req.socket && req.socket.remoteAddress) || "127.0.0.1";
       const referrer = req.headers["referer"] || req.headers["referrer"] || "";
       
       // Parse Country from standard Cloud hosting headers, fallback to PK

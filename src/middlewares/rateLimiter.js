@@ -13,7 +13,13 @@ const getStore = () => {
     return new RedisStore({
       // ioredis sendCommand implementation
       sendCommand: async (...args) => {
-        return redisClient.call(args[0], ...args.slice(1));
+        try {
+          return await redisClient.call(args[0], ...args.slice(1));
+        } catch (error) {
+          logger.error(`Redis Store rate-limiting execution failed: ${error.message}. Bypassing rate limit (fail-open).`);
+          // Return a mock [hits, resetTime] to let the request pass instead of throwing 500
+          return [1, 60];
+        }
       },
     });
   } catch (err) {
